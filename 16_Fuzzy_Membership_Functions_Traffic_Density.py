@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def triangular(x, a, b, c):
+    # Triangular membership function
+    return np.maximum(0, np.minimum((x-a)/(b-a+1e-12), (c-x)/(c-b+1e-12)))
+
+def trapezoidal(x, a, b, c, d):
+    # Trapezoidal membership function
+    left = np.where(x <= b, 1.0, np.where(x < c, 1.0, (d-x)/(d-c+1e-12)))
+    left_ramp = np.where(x <= a, 0.0, np.where(x < b, (x-a)/(b-a+1e-12), 1.0))
+    return np.maximum(0, np.minimum(left_ramp, left))
+
+def gaussian(x, mean, sigma):
+    return np.exp(-0.5 * ((x-mean)/sigma)**2)
+
+value = float(input("Enter traffic density (0-100): "))
+if not 0 <= value <= 100:
+    raise ValueError("Value is outside the allowed range 0 to 100.")
+
+x = np.linspace(0, 100, 501)
+# For the low-end trapezoid, membership is 1 through the flat region, then falls.
+def low_trapezoid(x, plateau_end, fall_end):
+    return np.where(x <= plateau_end, 1.0,
+                    np.where(x < fall_end, (fall_end-x)/(fall_end-plateau_end), 0.0))
+
+mu1 = low_trapezoid(x, 20, 40)
+mu2 = triangular(x, 25, 50, 75)
+mu3 = gaussian(x, 80, 12)
+
+m1 = float(low_trapezoid(np.array([value]), 20, 40)[0])
+m2 = float(triangular(np.array([value]), 25, 50, 75)[0])
+m3 = float(gaussian(np.array([value]), 80, 12)[0])
+print("Input value:", value)
+print("Low membership:", round(m1, 3))
+print("Medium membership:", round(m2, 3))
+print("High membership:", round(m3, 3))
+
+plt.plot(x, mu1, label="Low (trapezoidal)")
+plt.plot(x, mu2, label="Medium (triangular)")
+plt.plot(x, mu3, label="High (Gaussian)")
+plt.title("Low / Medium / High Membership Functions")
+plt.xlabel("Level (0-100)")
+plt.ylabel("Membership degree")
+plt.ylim(0, 1.05)
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig("traffic_density_membership.png")
+print("Plot saved as traffic_density_membership.png")
+plt.show()
+
+# SAMPLE INPUT:
+# Enter traffic density (0-100): 50
+# SAMPLE OUTPUT:
+# The three membership degrees are printed above; the plot is saved to traffic_density_membership.png.
